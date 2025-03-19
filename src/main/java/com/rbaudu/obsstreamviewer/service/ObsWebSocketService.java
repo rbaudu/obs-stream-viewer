@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbaudu.obsstreamviewer.config.ObsProperties;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
-import io.obswebsocket.community.client.BlockingConsumer;
 import io.obswebsocket.community.client.message.event.Event;
 import io.obswebsocket.community.client.message.request.stream.GetStreamStatusRequest;
 import io.obswebsocket.community.client.message.request.stream.StartStreamRequest;
