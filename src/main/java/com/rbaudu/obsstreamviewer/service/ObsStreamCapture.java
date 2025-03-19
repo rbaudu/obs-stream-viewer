@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service responsable de la capture des flux vidéo et audio depuis OBS.
+ * Version compatible avec OBS WebSocket 5.x
  * 
  * @author rbaudu
  */
@@ -36,6 +37,9 @@ public class ObsStreamCapture {
     @Autowired
     private ObsProperties obsProperties;
     
+    @Autowired
+    private ObsWebSocketService obsWebSocketService;
+    
     private AtomicBoolean running = new AtomicBoolean(false);
     private ExecutorService executorService;
     
@@ -48,7 +52,6 @@ public class ObsStreamCapture {
     @PostConstruct
     public void init() {
         executorService = Executors.newFixedThreadPool(2);
-        start();
     }
     
     /**
@@ -68,17 +71,65 @@ public class ObsStreamCapture {
     public void start() {
         if (running.compareAndSet(false, true)) {
             log.info("Starting OBS stream capture");
-            executorService.submit(this::captureVideoStream);
-            executorService.submit(this::captureAudioStream);
+            
+            // Connecter au WebSocket OBS si nécessaire
+            if (!obsWebSocketService.isConnected()) {
+                boolean connected = obsWebSocketService.connect();
+                if (!connected) {
+                    log.error("Échec de la connexion à OBS WebSocket, impossible de démarrer la capture");
+                    running.set(false);
+                    return;
+                }
+            }
+            
+            // Vérifier si le streaming est déjà actif dans OBS
+            obsWebSocketService.isStreamingActive().thenAccept(active -> {
+                if (!active) {
+                    // Démarrer le streaming dans OBS si nécessaire
+                    obsWebSocketService.startStreaming().thenAccept(success -> {
+                        if (success) {
+                            // Une fois le streaming actif, démarrer la capture
+                            startCapture();
+                        } else {
+                            log.error("Échec du démarrage du streaming OBS");
+                            running.set(false);
+                        }
+                    });
+                } else {
+                    // Le streaming est déjà actif, démarrer directement la capture
+                    startCapture();
+                }
+            }).exceptionally(ex -> {
+                log.error("Erreur lors de la vérification du statut de streaming OBS", ex);
+                running.set(false);
+                return null;
+            });
         }
+    }
+    
+    /**
+     * Démarre les tâches de capture de flux.
+     */
+    private void startCapture() {
+        executorService.submit(this::captureVideoStream);
+        executorService.submit(this::captureAudioStream);
     }
     
     /**
      * Arrête la capture des flux.
      */
     public void stop() {
-        running.set(false);
-        log.info("Stopping OBS stream capture");
+        if (running.compareAndSet(true, false)) {
+            log.info("Stopping OBS stream capture");
+            
+            // Optionnellement arrêter le streaming dans OBS
+            if (obsWebSocketService.isConnected()) {
+                obsWebSocketService.stopStreaming().exceptionally(ex -> {
+                    log.error("Erreur lors de l'arrêt du streaming OBS", ex);
+                    return false;
+                });
+            }
+        }
     }
     
     /**
@@ -107,6 +158,8 @@ public class ObsStreamCapture {
             while (running.get()) {
                 Frame frame = grabber.grab();
                 if (frame == null) {
+                    if (!running.get()) break;
+                    Thread.sleep(10); // Petite pause pour éviter une consommation CPU excessive
                     continue;
                 }
                 
@@ -115,7 +168,9 @@ public class ObsStreamCapture {
                 }
             }
         } catch (Exception e) {
-            log.error("Error capturing video stream", e);
+            if (running.get()) {
+                log.error("Error capturing video stream", e);
+            }
         }
         
         log.info("Video capture stopped");
@@ -146,6 +201,8 @@ public class ObsStreamCapture {
             while (running.get()) {
                 Frame frame = grabber.grab();
                 if (frame == null) {
+                    if (!running.get()) break;
+                    Thread.sleep(10); // Petite pause pour éviter une consommation CPU excessive
                     continue;
                 }
                 
@@ -154,7 +211,9 @@ public class ObsStreamCapture {
                 }
             }
         } catch (Exception e) {
-            log.error("Error capturing audio stream", e);
+            if (running.get()) {
+                log.error("Error capturing audio stream", e);
+            }
         }
         
         log.info("Audio capture stopped");
@@ -248,5 +307,14 @@ public class ObsStreamCapture {
         // TODO: Implémentation réelle de la conversion
         
         return bytes;
+    }
+    
+    /**
+     * Vérifie si la capture est en cours.
+     * 
+     * @return true si la capture est active
+     */
+    public boolean isRunning() {
+        return running.get();
     }
 }

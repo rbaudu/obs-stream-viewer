@@ -49,7 +49,7 @@
                                             L'application est conçue pour fonctionner avec OBS Studio et utilise la fonction de diffusion de contenu d'OBS pour recevoir les flux vidéo et audio, et les synchroniser pour un affichage en temps réel.
                                         </p>
                                         <div class="alert alert-info">
-                                            <strong>Note:</strong> Cette application nécessite OBS Studio version 27.0.0 ou supérieure avec le plugin WebSocket activé.
+                                            <strong>Note:</strong> Cette application nécessite OBS Studio version 31.0.0 ou supérieure avec le plugin WebSocket 5.x activé.
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="setup" role="tabpanel" aria-labelledby="setup-tab">
@@ -59,12 +59,16 @@
                                         <h5>1. Activation du serveur WebSocket</h5>
                                         <ul>
                                             <li>Ouvrez OBS Studio</li>
-                                            <li>Dans le menu, accédez à <strong>Outils</strong> > <strong>WebSockets Server Settings</strong></li>
-                                            <li>Cochez l'option <strong>Enable WebSockets Server</strong></li>
-                                            <li>Définissez le port sur <code th:text="${obsConfig.connection.websocketPort}">4444</code> (ou celui configuré dans les paramètres de l'application)</li>
-                                            <li>Si souhaité, activez l'authentification et définissez un mot de passe</li>
+                                            <li>Dans le menu, accédez à <strong>Outils</strong> > <strong>obs-websocket Settings</strong> (ou <strong>Paramètres WebSocket</strong>)</li>
+                                            <li>Assurez-vous que l'option <strong>Enable WebSocket server</strong> est cochée</li>
+                                            <li>Le port par défaut est <code>4455</code> (pour WebSocket 5.x). Configurez-le pour correspondre au port WebSocket configuré dans cette application (<code th:text="${obsConfig.connection.websocketPort}">4444</code>)</li>
+                                            <li>Si vous souhaitez activer l'authentification, définissez un mot de passe et assurez-vous qu'il correspond à celui configuré dans l'application</li>
                                             <li>Cliquez sur <strong>OK</strong> pour enregistrer les paramètres</li>
                                         </ul>
+                                        
+                                        <div class="alert alert-warning">
+                                            <strong>Important :</strong> Cette version de l'application est compatible avec OBS WebSocket 5.x (inclus dans OBS Studio 31.0.0+). Si vous utilisez une version antérieure d'OBS, vous devrez mettre à jour ou utiliser une version antérieure de cette application.
+                                        </div>
                                         
                                         <h5>2. Configuration de la sortie vidéo</h5>
                                         <ul>
@@ -97,6 +101,9 @@
                                             <li>Cliquez sur <strong>Démarrer</strong> pour commencer la capture du flux depuis OBS</li>
                                             <li>Cliquez sur <strong>Arrêter</strong> pour interrompre la capture</li>
                                         </ul>
+                                        <p>
+                                            L'application se connectera automatiquement à OBS via WebSocket 5.x et démarrera le streaming dans OBS si nécessaire.
+                                        </p>
                                         
                                         <h5>Contrôle du volume</h5>
                                         <p>
@@ -160,9 +167,9 @@
                                                 <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#troubleshootingAccordion">
                                                     <div class="accordion-body">
                                                         <ul>
-                                                            <li>Vérifiez qu'OBS Studio est en cours d'exécution</li>
-                                                            <li>Assurez-vous que le serveur WebSocket est activé dans OBS</li>
-                                                            <li>Vérifiez que les ports configurés dans l'application correspondent à ceux configurés dans OBS</li>
+                                                            <li>Vérifiez qu'OBS Studio est en cours d'exécution et qu'il s'agit de la version 31.0.0 ou supérieure</li>
+                                                            <li>Assurez-vous que le plugin WebSocket 5.x est activé dans OBS</li>
+                                                            <li>Vérifiez que le port WebSocket configuré dans l'application (<code th:text="${obsConfig.connection.websocketPort}">4444</code>) correspond au port configuré dans OBS (généralement 4455 pour WebSocket 5.x)</li>
                                                             <li>Si vous avez activé l'authentification, vérifiez que le mot de passe est correct</li>
                                                             <li>Vérifiez que votre pare-feu ne bloque pas les connexions aux ports utilisés</li>
                                                         </ul>
@@ -183,6 +190,7 @@
                                                             <li>Vérifiez qu'OBS est en mode "Studio" et que vous avez cliqué sur "Démarrer la diffusion"</li>
                                                             <li>Vérifiez que le son n'est pas coupé dans l'application</li>
                                                             <li>Essayez de rafraîchir la page</li>
+                                                            <li>Vérifiez que la connexion WebSocket est établie (page Paramètres > État de la connexion)</li>
                                                         </ul>
                                                     </div>
                                                 </div>
@@ -207,17 +215,17 @@
                                             <div class="accordion-item">
                                                 <h2 class="accordion-header" id="headingFour">
                                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                                        Problèmes de performance
+                                                        Problèmes avec WebSocket 5.x
                                                     </button>
                                                 </h2>
                                                 <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#troubleshootingAccordion">
                                                     <div class="accordion-body">
                                                         <ul>
-                                                            <li>Réduisez la résolution vidéo dans les paramètres</li>
-                                                            <li>Diminuez la fréquence d'images (FPS)</li>
-                                                            <li>Fermez les applications inutilisées pour libérer des ressources système</li>
-                                                            <li>Si vous utilisez un navigateur, essayez d'en utiliser un autre (Chrome ou Firefox sont recommandés)</li>
-                                                            <li>Vérifiez la connexion réseau entre le serveur et le client</li>
+                                                            <li>Cette version de l'application est spécifiquement conçue pour OBS Studio 31.0.0+ avec WebSocket 5.x</li>
+                                                            <li>Vérifiez votre version d'OBS Studio et assurez-vous qu'elle est compatible</li>
+                                                            <li>Le port par défaut pour WebSocket 5.x est 4455, assurez-vous que votre configuration est correcte</li>
+                                                            <li>Si vous utilisez une version antérieure d'OBS, vous devrez mettre à jour ou utiliser une version compatible</li>
+                                                            <li>Consultez la <a href="https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md" target="_blank">documentation officielle de WebSocket 5.x</a> pour plus d'informations</li>
                                                         </ul>
                                                     </div>
                                                 </div>
