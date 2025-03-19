@@ -2,6 +2,7 @@ package com.rbaudu.obsstreamviewer.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rbaudu.obsstreamviewer.model.SyncedMediaStream;
 import com.rbaudu.obsstreamviewer.service.ObsStreamCapture;
+import com.rbaudu.obsstreamviewer.service.ObsWebSocketService;
 import com.rbaudu.obsstreamviewer.service.StreamSynchronizer;
 
 /**
  * Contrôleur REST pour gérer les opérations liées aux flux.
+ * Version mise à jour pour OBS WebSocket 5.x
  * 
  * @author rbaudu
  */
@@ -30,6 +33,9 @@ public class StreamController {
     
     @Autowired
     private ObsStreamCapture obsStreamCapture;
+    
+    @Autowired
+    private ObsWebSocketService obsWebSocketService;
     
     /**
      * Récupère les informations sur le flux par défaut.
@@ -93,6 +99,18 @@ public class StreamController {
      */
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startCapture() {
+        // Vérifier d'abord si OBS est connecté
+        if (!obsWebSocketService.isConnected()) {
+            boolean connected = obsWebSocketService.connect();
+            if (!connected) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Impossible de se connecter à OBS Studio via WebSocket");
+                return ResponseEntity.ok(error);
+            }
+        }
+        
+        // Démarrer la capture
         obsStreamCapture.start();
         
         Map<String, Object> response = new HashMap<>();
@@ -116,6 +134,35 @@ public class StreamController {
         response.put("message", "Capture des flux arrêtée");
         
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Vérifie l'état de connexion à OBS.
+     * 
+     * @return État de la connexion
+     */
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getStatus() {
+        Map<String, Object> status = new HashMap<>();
+        boolean connected = obsWebSocketService.isConnected();
+        boolean capturing = obsStreamCapture.isRunning();
+        
+        status.put("connected", connected);
+        status.put("capturing", capturing);
+        
+        if (connected) {
+            CompletableFuture<Boolean> streamingActiveFuture = obsWebSocketService.isStreamingActive();
+            try {
+                boolean streamingActive = streamingActiveFuture.get();
+                status.put("obsStreamingActive", streamingActive);
+            } catch (Exception e) {
+                status.put("obsStreamingActive", false);
+            }
+        } else {
+            status.put("obsStreamingActive", false);
+        }
+        
+        return ResponseEntity.ok(status);
     }
     
     /**
