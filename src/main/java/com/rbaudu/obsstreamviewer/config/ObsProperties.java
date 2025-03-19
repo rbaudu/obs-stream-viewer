@@ -29,7 +29,7 @@ public class ObsProperties {
         private String host = "localhost";
         private int videoPort = 8081;
         private int audioPort = 8082;
-        private int websocketPort = 4444;
+        private int websocketPort = 4455;
         private String password = "";
     }
     

@@ -13,7 +13,7 @@
     <groupId>com.rbaudu</groupId>
     <artifactId>obs-stream-viewer</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <n>obs-stream-viewer</n>
+    <name>obs-stream-viewer</name>
     <description>Application pour capturer et afficher des flux vidéo et audio d'OBS Studio</description>
     
     <properties>
