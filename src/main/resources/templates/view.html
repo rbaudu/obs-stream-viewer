@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Visualisation du flux</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/static/css/view.css}">
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-video me-2"></i> Visualisation du flux - <span th:text="${stream.name}">Flux</span>
+                        </h3>
+                        <div class="stream-controls">
+                            <button id="fullscreenBtn" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-expand me-1"></i> Plein écran
+                            </button>
+                            <button id="muteToggleBtn" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-volume-mute me-1"></i> Son
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="stream-container">
+                            <div id="viewerContainer" class="video-container">
+                                <video id="videoPlayer" autoplay muted playsinline></video>
+                                <div class="loading-overlay" id="videoLoading">
+                                    <div class="spinner-border text-light" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <div class="mt-2 text-light">Connexion au flux vidéo...</div>
+                                </div>
+                                <div class="controls-overlay" id="videoControls">
+                                    <div class="bottom-controls">
+                                        <div class="sync-control">
+                                            <label for="syncOffset" class="form-label text-light">Décalage de synchronisation: <span id="syncOffsetValue">0</span> ms</label>
+                                            <input type="range" class="form-range" id="syncOffset" min="-1000" max="1000" step="10" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stream-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Informations du flux</h5>
+                                    <ul class="list-unstyled">
+                                        <li>ID: <span th:text="${stream.id}">-</span></li>
+                                        <li>Créé le: <span th:text="${#temporals.format(stream.createdAt, 'dd/MM/yyyy HH:mm:ss')}">-</span></li>
+                                        <li>Dernière mise à jour: <span id="lastUpdated" th:text="${#temporals.format(stream.updatedAt, 'dd/MM/yyyy HH:mm:ss')}">-</span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Paramètres</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Résolution: <span id="resolution" th:text="${stream.videoWidth + 'x' + stream.videoHeight}">-</span></li>
+                                        <li>Audio: <span id="audioInfo" th:text="${stream.audioSampleRate + ' Hz, ' + stream.audioChannels + ' canaux'}">-</span></li>
+                                        <li>Décalage: <span id="currentOffset" th:text="${stream.syncOffsetMs + ' ms'}">0 ms</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block layout:fragment="js">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            // Variables Thymeleaf
+            const streamId = /*[[${stream.id}]]*/ 'default';
+            const initialSyncOffset = /*[[${stream.syncOffsetMs}]]*/ 0;
+            /*]]>*/
+        </script>
+        <script th:src="@{/static/js/view.js}"></script>
+    </th:block>
+</body>
+</html>
