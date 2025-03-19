@@ -1,0 +1,60 @@
+/* 
+ * Styles spécifiques pour la page d'accueil 
+ */
+
+/* Conteneur de flux */
+.stream-container {
+    margin-bottom: 20px;
+}
+
+/* Contrôles de flux */
+.stream-controls {
+    display: flex;
+    align-items: center;
+}
+
+/* Informations sur le flux */
+.stream-info {
+    padding: 10px 0;
+}
+
+.stream-info h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.stream-info ul {
+    margin-bottom: 0;
+}
+
+.stream-info ul li {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+/* Personnalisation des contrôles */
+.controls-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+/* Section d'instructions */
+.card ol, .card ul {
+    padding-left: 1.5rem;
+}
+
+.card li {
+    margin-bottom: 10px;
+}
+
+.card code {
+    background-color: #f8f9fa;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
