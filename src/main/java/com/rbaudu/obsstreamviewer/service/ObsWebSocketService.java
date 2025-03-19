@@ -76,8 +76,8 @@ public class ObsWebSocketService {
             int port = obsProperties.getConnection().getWebsocketPort();
             String password = obsProperties.getConnection().getPassword();
 
-            // Créer le builder avec les paramètres de connexion et configuration
-            OBSRemoteControllerBuilder builder = OBSRemoteControllerBuilder.builder()
+            // Créer une nouvelle instance du builder
+            OBSRemoteControllerBuilder builder = new OBSRemoteControllerBuilder()
                 .host(host)
                 .port(port);
 
@@ -86,30 +86,43 @@ public class ObsWebSocketService {
                 builder.password(password);
             }
             
-            // Configurer les écouteurs d'événements via la façade lifecycle
-            builder.lifecycle()
-                .withControllerLifecycle(controllerLifecycle -> controllerLifecycle
-                    .onConnectionAttempt(() -> log.info("Tentative de connexion à OBS WebSocket"))
-                    .onConnectionEstablished(() -> {
+            // Configurer les écouteurs de cycle de vie
+            builder.lifecycle().withControllerLifecycle(
+                controllerLifecycle -> {
+                    controllerLifecycle.onConnectionAttempt(() -> 
+                        log.info("Tentative de connexion à OBS WebSocket"));
+                        
+                    controllerLifecycle.onConnectionEstablished(() -> {
                         log.info("Connexion établie avec OBS WebSocket");
                         connected = true;
-                    })
-                    .onDisconnect(reason -> {
+                    });
+                    
+                    controllerLifecycle.onDisconnect(reason -> {
                         log.info("Déconnexion d'OBS WebSocket: {}", reason.getMessage());
                         connected = false;
-                    })
-                    .onControllerError(error -> 
-                        log.error("Erreur OBS WebSocket: {}", error.getMessage(), error)
-                    )
-                );
+                    });
+                    
+                    controllerLifecycle.onControllerError(error -> 
+                        log.error("Erreur OBS WebSocket: {}", error.getMessage(), error));
+                    
+                    return controllerLifecycle;
+                }
+            );
             
-            // Enregistrer l'écouteur pour l'événement StreamStateChanged
-            builder.registerEventListener(Event.StreamStateChanged.class, event -> {
-                Boolean outputActive = event.getEventData().get("outputActive").asBoolean();
-                log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
+            // Enregistrer l'écouteur d'événements pour détecter les changements d'état du stream
+            builder.registerEventListener(Event.class, event -> {
+                if (event.getMessageData().getEventType().name().equals("StreamStateChanged")) {
+                    try {
+                        Boolean outputActive = event.getMessageData().getEventData()
+                            .getAsJsonObject().get("outputActive").getAsBoolean();
+                        log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
+                    } catch (Exception e) {
+                        log.error("Erreur lors du traitement de l'événement StreamStateChanged", e);
+                    }
+                }
             });
             
-            // Créer le contrôleur OBS et se connecter
+            // Créer le contrôleur OBS
             obsRemoteController = builder.build();
             obsRemoteController.connect();
             
@@ -151,8 +164,10 @@ public class ObsWebSocketService {
         }
 
         try {
-            // Utiliser la méthode correcte avec le type concret de requête
-            obsRemoteController.sendRequest(new StartStreamRequest(), (StartStreamResponse response) -> {
+            // Utiliser le builder statique pour créer les requêtes
+            StartStreamRequest request = StartStreamRequest.builder().build();
+            
+            obsRemoteController.sendRequest(request, (StartStreamResponse response) -> {
                 resultFuture.complete(true);
             });
         } catch (Exception e) {
@@ -177,8 +192,10 @@ public class ObsWebSocketService {
         }
 
         try {
-            // Utiliser la méthode correcte avec le type concret de requête
-            obsRemoteController.sendRequest(new StopStreamRequest(), (StopStreamResponse response) -> {
+            // Utiliser le builder statique pour créer les requêtes
+            StopStreamRequest request = StopStreamRequest.builder().build();
+            
+            obsRemoteController.sendRequest(request, (StopStreamResponse response) -> {
                 resultFuture.complete(true);
             });
         } catch (Exception e) {
@@ -203,8 +220,10 @@ public class ObsWebSocketService {
         }
 
         try {
-            // Utiliser la méthode correcte avec le type concret de requête
-            obsRemoteController.sendRequest(new GetStreamStatusRequest(), (GetStreamStatusResponse response) -> {
+            // Utiliser le builder statique pour créer les requêtes
+            GetStreamStatusRequest request = GetStreamStatusRequest.builder().build();
+            
+            obsRemoteController.sendRequest(request, (GetStreamStatusResponse response) -> {
                 resultFuture.complete(response.getOutputActive());
             });
         } catch (Exception e) {
