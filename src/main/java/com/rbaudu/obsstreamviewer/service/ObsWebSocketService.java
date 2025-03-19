@@ -2,6 +2,7 @@ package com.rbaudu.obsstreamviewer.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rbaudu.obsstreamviewer.config.ObsProperties;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
@@ -87,34 +88,18 @@ public class ObsWebSocketService {
             }
             
             // Configurer les écouteurs de cycle de vie
-            builder.lifecycle().withControllerLifecycle(
-                controllerLifecycle -> {
-                    controllerLifecycle.onConnectionAttempt(() -> 
-                        log.info("Tentative de connexion à OBS WebSocket"));
-                        
-                    controllerLifecycle.onConnectionEstablished(() -> {
-                        log.info("Connexion établie avec OBS WebSocket");
-                        connected = true;
-                    });
-                    
-                    controllerLifecycle.onDisconnect(reason -> {
-                        log.info("Déconnexion d'OBS WebSocket: {}", reason.getMessage());
-                        connected = false;
-                    });
-                    
-                    controllerLifecycle.onControllerError(error -> 
-                        log.error("Erreur OBS WebSocket: {}", error.getMessage(), error));
-                    
-                    return controllerLifecycle;
-                }
-            );
+            // La méthode withControllerLifecycle n'est pas disponible directement
+            // Utilisons les méthodes disponibles individuellement
+            builder.lifecycle()
+                .onConnectionAttempt(() -> log.info("Tentative de connexion à OBS WebSocket"))
+                .onControllerError(error -> log.error("Erreur OBS WebSocket: {}", error.getMessage(), error));
             
             // Enregistrer l'écouteur d'événements pour détecter les changements d'état du stream
             builder.registerEventListener(Event.class, event -> {
                 if (event.getMessageData().getEventType().name().equals("StreamStateChanged")) {
                     try {
-                        Boolean outputActive = event.getMessageData().getEventData()
-                            .getAsJsonObject().get("outputActive").getAsBoolean();
+                        JsonNode eventData = (JsonNode) event.getMessageData().getEventData();
+                        Boolean outputActive = eventData.get("outputActive").asBoolean();
                         log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
                     } catch (Exception e) {
                         log.error("Erreur lors du traitement de l'événement StreamStateChanged", e);
@@ -124,6 +109,19 @@ public class ObsWebSocketService {
             
             // Créer le contrôleur OBS
             obsRemoteController = builder.build();
+            
+            // Ajouter des écouteurs post-construction sur le contrôleur
+            obsRemoteController.onConnectionEstablished(() -> {
+                log.info("Connexion établie avec OBS WebSocket");
+                connected = true;
+            });
+            
+            obsRemoteController.onDisconnect(reason -> {
+                log.info("Déconnexion d'OBS WebSocket: {}", reason);
+                connected = false;
+            });
+            
+            // Se connecter
             obsRemoteController.connect();
             
             // Attendre un peu pour voir si la connexion s'établit
