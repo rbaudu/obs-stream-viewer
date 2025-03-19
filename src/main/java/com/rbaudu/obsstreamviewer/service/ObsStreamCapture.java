@@ -226,7 +226,13 @@ public class ObsStreamCapture {
      */
     private void processVideoFrame(Frame frame) {
         try {
-            byte[] frameBytes = convertFrameToBytes(frame);
+            // Calculer la taille des données et créer le tableau d'octets
+            int bytesSize = frame.imageWidth * frame.imageHeight * 3;
+            byte[] frameBytes = new byte[bytesSize];
+            
+            // Appliquer un traitement sur les données
+            // Ceci est juste un exemple, vous devriez implémenter la conversion réelle
+            
             String encodedFrame = Base64.getEncoder().encodeToString(frameBytes);
             
             VideoPacket packet = new VideoPacket();
@@ -252,7 +258,19 @@ public class ObsStreamCapture {
      */
     private void processAudioFrame(Frame frame) {
         try {
-            byte[] sampleBytes = convertAudioToBytes(frame);
+            // Vérifier et calculer la taille réelle des données
+            int sampleCount = 0;
+            if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
+                sampleCount = frame.samples[0].length;
+            }
+            
+            // Créer le tableau d'octets à la bonne taille
+            int bytesSize = sampleCount * frame.audioChannels * 2;
+            byte[] sampleBytes = new byte[bytesSize];
+            
+            // Appliquer un traitement sur les données
+            // Ceci est juste un exemple, vous devriez implémenter la conversion réelle
+            
             String encodedSamples = Base64.getEncoder().encodeToString(sampleBytes);
             
             AudioPacket packet = new AudioPacket();
@@ -262,11 +280,6 @@ public class ObsStreamCapture {
             packet.setChannels(frame.audioChannels);
             packet.setAudioData(encodedSamples);
             packet.setPts(frame.timestamp);
-            
-            int sampleCount = 0;
-            if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
-                sampleCount = frame.samples[0].length;
-            }
             packet.setSampleCount(sampleCount);
             packet.setPresentationTimestampMs(System.currentTimeMillis());
             
@@ -290,9 +303,9 @@ public class ObsStreamCapture {
         // Cette implémentation est simplifiée.
         // Dans un environnement de production, utilisez un encodeur vidéo approprié.
         
-        // Pour l'instant, on simule la conversion
-        int bytesLength = frame.imageWidth * frame.imageHeight * 3;
-        byte[] bytes = new byte[bytesLength];
+        // Calculer la taille nécessaire pour le tableau d'octets
+        int bytesSize = frame.imageWidth * frame.imageHeight * 3;
+        byte[] bytes = new byte[bytesSize];
         // TODO: Implémentation réelle de la conversion
         
         return bytes;
@@ -308,13 +321,13 @@ public class ObsStreamCapture {
         // Cette implémentation est simplifiée.
         // Dans un environnement de production, utilisez un encodeur audio approprié.
         
-        // Pour l'instant, on simule la conversion
+        // Calculer la taille nécessaire pour le tableau d'octets
         int sampleCount = 0;
         if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
             sampleCount = frame.samples[0].length;
         }
-        int bytesLength = sampleCount * frame.audioChannels * 2;
-        byte[] bytes = new byte[bytesLength];
+        int bytesSize = sampleCount * frame.audioChannels * 2;
+        byte[] bytes = new byte[bytesSize];
         // TODO: Implémentation réelle de la conversion
         
         return bytes;
