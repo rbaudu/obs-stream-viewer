@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Accueil</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/static/css/index.css}">
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-video me-2"></i> Flux vidéo et audio
+                        </h3>
+                        <div class="stream-controls">
+                            <button id="startStreamBtn" class="btn btn-success btn-sm me-2">
+                                <i class="fas fa-play me-1"></i> Démarrer
+                            </button>
+                            <button id="stopStreamBtn" class="btn btn-danger btn-sm">
+                                <i class="fas fa-stop me-1"></i> Arrêter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="stream-container">
+                            <div class="video-container">
+                                <video id="videoPlayer" autoplay muted playsinline></video>
+                                <div class="loading-overlay" id="videoLoading">
+                                    <div class="spinner-border text-light" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <div class="mt-2 text-light">Connexion au flux vidéo...</div>
+                                </div>
+                            </div>
+                            <div class="controls-container mt-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="muteAudio" checked>
+                                            <label class="form-check-label" for="muteAudio">
+                                                Couper le son
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="syncOffset" class="form-label">Décalage de synchronisation (ms): <span id="syncOffsetValue">0</span></label>
+                                            <input type="range" class="form-range" id="syncOffset" min="-1000" max="1000" step="10" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="stream-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Informations vidéo</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Résolution: <span id="videoResolution">-</span></li>
+                                        <li>Format: <span id="videoFormat">-</span></li>
+                                        <li>Fréquence d'images: <span id="videoFramerate">-</span> FPS</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Informations audio</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Fréquence d'échantillonnage: <span id="audioSampleRate">-</span> Hz</li>
+                                        <li>Canaux: <span id="audioChannels">-</span></li>
+                                        <li>Format: <span id="audioFormat">-</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Instructions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Cette application vous permet de capturer, synchroniser et afficher des flux vidéo et audio depuis OBS Studio.</p>
+                        <h5>Configuration requise</h5>
+                        <ol>
+                            <li>Ouvrez OBS Studio</li>
+                            <li>Dans le menu Outils, choisissez "WebSockets Server Settings"</li>
+                            <li>Activez le serveur WebSocket et configurez-le avec les mêmes paramètres que ceux définis dans cette application</li>
+                            <li>Configurez une sortie vidéo et audio pour diffuser vers l'adresse <code th:text="${obsConfig.connection.host + ':' + obsConfig.connection.videoPort}">localhost:8081</code> pour la vidéo et <code th:text="${obsConfig.connection.host + ':' + obsConfig.connection.audioPort}">localhost:8082</code> pour l'audio</li>
+                        </ol>
+                        <h5>Utilisation</h5>
+                        <ul>
+                            <li>Cliquez sur <strong>Démarrer</strong> pour commencer la capture du flux</li>
+                            <li>Utilisez le curseur de synchronisation pour ajuster le décalage entre l'audio et la vidéo si nécessaire</li>
+                            <li>Cliquez sur <strong>Arrêter</strong> pour terminer la capture</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block layout:fragment="js">
+        <script th:src="@{/static/js/index.js}"></script>
+    </th:block>
+</body>
+</html>
