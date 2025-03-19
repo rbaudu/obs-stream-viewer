@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Paramètres</title>
+    <th:block layout:fragment="css">
+        <link rel="stylesheet" th:href="@{/static/css/settings.css}">
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-cog me-2"></i> Paramètres de l'application
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="mb-4">
+                                <h4>Configuration OBS</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="obsHost" class="form-label">Hôte OBS</label>
+                                            <input type="text" class="form-control" id="obsHost" th:value="${obsConfig.connection.host}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="obsPassword" class="form-label">Mot de passe WebSocket (optionnel)</label>
+                                            <input type="password" class="form-control" id="obsPassword" th:value="${obsConfig.connection.password}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="obsVideoPort" class="form-label">Port vidéo</label>
+                                            <input type="number" class="form-control" id="obsVideoPort" th:value="${obsConfig.connection.videoPort}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="obsAudioPort" class="form-label">Port audio</label>
+                                            <input type="number" class="form-control" id="obsAudioPort" th:value="${obsConfig.connection.audioPort}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="obsWebsocketPort" class="form-label">Port WebSocket</label>
+                                            <input type="number" class="form-control" id="obsWebsocketPort" th:value="${obsConfig.connection.websocketPort}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4>Paramètres vidéo</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="videoWidth" class="form-label">Largeur</label>
+                                            <input type="number" class="form-control" id="videoWidth" th:value="${obsConfig.video.width}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="videoHeight" class="form-label">Hauteur</label>
+                                            <input type="number" class="form-control" id="videoHeight" th:value="${obsConfig.video.height}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="videoFramerate" class="form-label">Images par seconde</label>
+                                            <input type="number" class="form-control" id="videoFramerate" th:value="${obsConfig.video.framerate}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4>Paramètres audio</h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="audioSampleRate" class="form-label">Fréquence d'échantillonnage (Hz)</label>
+                                            <select class="form-select" id="audioSampleRate">
+                                                <option value="44100" th:selected="${obsConfig.audio.sampleRate == 44100}">44100 Hz</option>
+                                                <option value="48000" th:selected="${obsConfig.audio.sampleRate == 48000}">48000 Hz</option>
+                                                <option value="96000" th:selected="${obsConfig.audio.sampleRate == 96000}">96000 Hz</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="audioChannels" class="form-label">Canaux audio</label>
+                                            <select class="form-select" id="audioChannels">
+                                                <option value="1" th:selected="${obsConfig.audio.channels == 1}">Mono (1)</option>
+                                                <option value="2" th:selected="${obsConfig.audio.channels == 2}">Stéréo (2)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4>Paramètres de synchronisation</h4>
+                                <div class="mb-3">
+                                    <label for="defaultSyncOffset" class="form-label">Décalage de synchronisation par défaut (ms)</label>
+                                    <input type="number" class="form-control" id="defaultSyncOffset" th:value="${stream.syncOffsetMs}">
+                                    <div class="form-text">Valeur positive: l'audio est en avance sur la vidéo. Valeur négative: la vidéo est en avance sur l'audio.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary me-md-2" id="resetBtn">
+                                    <i class="fas fa-undo me-1"></i> Réinitialiser
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Enregistrer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block layout:fragment="js">
+        <script th:src="@{/static/js/settings.js}"></script>
+    </th:block>
+</body>
+</html>
