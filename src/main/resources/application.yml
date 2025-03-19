@@ -1,0 +1,50 @@
+# Configuration principale de l'application
+spring:
+  application:
+    name: obs-stream-viewer
+  thymeleaf:
+    cache: false
+    mode: HTML
+    encoding: UTF-8
+  resources:
+    static-locations: classpath:/static/
+  mvc:
+    static-path-pattern: /static/**
+
+# Configuration du serveur
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
+    min-response-size: 1024
+
+# Configuration personnalisée pour OBS
+obs:
+  # Paramètres de connexion à OBS
+  connection:
+    host: localhost
+    video-port: 8081
+    audio-port: 8082
+    websocket-port: 4444
+    password: ""
+  
+  # Paramètres de la vidéo
+  video:
+    width: 1280
+    height: 720
+    framerate: 30
+    format: yuv420p
+  
+  # Paramètres audio
+  audio:
+    sampleRate: 44100
+    channels: 2
+    format: s16le
+
+# Configuration des logs
+logging:
+  level:
+    root: INFO
+    com.rbaudu.obsstreamviewer: DEBUG
+    org.springframework.web: INFO
