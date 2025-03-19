@@ -6,11 +6,6 @@ import com.rbaudu.obsstreamviewer.config.ObsProperties;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
 import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
-import io.obswebsocket.community.client.message.request.streaming.StartStreamRequest;
-import io.obswebsocket.community.client.message.request.streaming.StopStreamRequest;
-import io.obswebsocket.community.client.message.request.streaming.GetStreamStatusRequest;
-import io.obswebsocket.community.client.message.response.streaming.GetStreamStatusResponse;
-import io.obswebsocket.community.client.message.event.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -134,13 +130,17 @@ public class ObsWebSocketService {
     private void registerEventHandlers() {
         if (obsRemoteController != null) {
             // Exemple d'abonnement à un événement spécifique
-            obsRemoteController.registerEventListener(Event.StreamStateChanged.class, event -> {
-                boolean outputActive = event.getOutputActive();
-                log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
-                
-                // Mettre à jour le statut du streaming dans l'application
-                if (streamSynchronizer != null) {
-                    // Appeler les méthodes correspondantes dans le synchroniseur
+            obsRemoteController.registerEventListener("StreamStateChanged", event -> {
+                try {
+                    boolean outputActive = event.getEventData().get("outputActive").asBoolean();
+                    log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
+                    
+                    // Mettre à jour le statut du streaming dans l'application
+                    if (streamSynchronizer != null) {
+                        // Appeler les méthodes correspondantes dans le synchroniseur
+                    }
+                } catch (Exception e) {
+                    log.error("Erreur lors du traitement de l'événement StreamStateChanged: {}", e.getMessage(), e);
                 }
             });
         }
@@ -158,7 +158,8 @@ public class ObsWebSocketService {
             return future;
         }
 
-        return obsRemoteController.sendRequest(new StartStreamRequest())
+        Map<String, Object> requestFields = new HashMap<>();
+        return obsRemoteController.sendRequest("StartStream", requestFields)
                 .thenApply(response -> true)
                 .exceptionally(ex -> {
                     log.error("Erreur lors du démarrage du streaming OBS: {}", ex.getMessage(), ex);
@@ -178,7 +179,8 @@ public class ObsWebSocketService {
             return future;
         }
 
-        return obsRemoteController.sendRequest(new StopStreamRequest())
+        Map<String, Object> requestFields = new HashMap<>();
+        return obsRemoteController.sendRequest("StopStream", requestFields)
                 .thenApply(response -> true)
                 .exceptionally(ex -> {
                     log.error("Erreur lors de l'arrêt du streaming OBS: {}", ex.getMessage(), ex);
@@ -198,8 +200,16 @@ public class ObsWebSocketService {
             return future;
         }
 
-        return obsRemoteController.sendRequest(new GetStreamStatusRequest())
-                .thenApply(response -> ((GetStreamStatusResponse) response).getOutputActive())
+        Map<String, Object> requestFields = new HashMap<>();
+        return obsRemoteController.sendRequest("GetStreamStatus", requestFields)
+                .thenApply(response -> {
+                    try {
+                        return response.getResponseData().get("outputActive").asBoolean();
+                    } catch (Exception e) {
+                        log.error("Erreur lors du traitement de la réponse GetStreamStatus: {}", e.getMessage(), e);
+                        return false;
+                    }
+                })
                 .exceptionally(ex -> {
                     log.error("Erreur lors de la vérification du statut de streaming OBS: {}", ex.getMessage(), ex);
                     return false;
