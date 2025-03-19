@@ -1,0 +1,162 @@
+/*
+ * Styles spécifiques pour la page d'aide
+ */
+
+/* Style de la navigation par onglets */
+.nav-pills .nav-link {
+    color: #495057;
+    background-color: #f8f9fa;
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 5px;
+    transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+    border-left: 3px solid #6c757d;
+}
+
+.nav-pills .nav-link.active {
+    color: #3498db;
+    background-color: #e8f4fd;
+    border-left: 3px solid #3498db;
+    font-weight: 600;
+}
+
+/* Stylisation du contenu des onglets */
+.tab-content {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-pane h4 {
+    color: #2c3e50;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f1f1f1;
+}
+
+.tab-pane h5 {
+    color: #34495e;
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tab-pane p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.tab-pane ul, .tab-pane ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-pane li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+/* Style pour les alertes */
+.alert {
+    border-radius: 5px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-info {
+    background-color: #e8f4fd;
+    border-color: #bce8f1;
+    color: #31708f;
+}
+
+.alert-warning {
+    background-color: #fcf8e3;
+    border-color: #faebcc;
+    color: #8a6d3b;
+}
+
+/* Style pour le code */
+code {
+    background-color: #f8f9fa;
+    color: #e74c3c;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+    font-size: 0.9em;
+}
+
+/* Style pour les accordions */
+.accordion-button {
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e8f4fd;
+    color: #3498db;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
+.accordion-body {
+    padding: 1rem 1.25rem;
+}
+
+/* Liens */
+.tab-pane a {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.tab-pane a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Version mobile */
+@media (max-width: 768px) {
+    .nav-pills {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 15px;
+    }
+    
+    .nav-pills .nav-link {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.5rem 0.75rem;
+        margin-right: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .nav-pills .nav-link:hover,
+    .nav-pills .nav-link.active {
+        border-left: none;
+        border-bottom: 3px solid #3498db;
+    }
+    
+    .tab-content {
+        padding: 15px;
+    }
+    
+    .tab-pane h4 {
+        font-size: 1.2rem;
+    }
+    
+    .tab-pane h5 {
+        font-size: 1rem;
+    }
+}
