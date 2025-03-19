@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rbaudu.obsstreamviewer.config.ObsProperties;
 import io.obswebsocket.community.client.OBSRemoteController;
-import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
-import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
+import io.obswebsocket.community.client.message.event.streaming.StreamStateChangedEvent;
+import io.obswebsocket.community.client.message.request.streaming.GetStreamStatusRequest;
+import io.obswebsocket.community.client.message.request.streaming.StartStreamRequest;
+import io.obswebsocket.community.client.message.request.streaming.StopStreamRequest;
+import io.obswebsocket.community.client.message.response.streaming.GetStreamStatusResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -46,8 +48,7 @@ public class ObsWebSocketService {
      */
     @PostConstruct
     public void init() {
-        // Les handlers d'événements peuvent être initialisés ici
-        registerEventHandlers();
+        // Les handlers d'événements peuvent être initialisés ici si nécessaire
     }
 
     /**
@@ -73,37 +74,62 @@ public class ObsWebSocketService {
             int port = obsProperties.getConnection().getWebsocketPort();
             String password = obsProperties.getConnection().getPassword();
 
-            OBSRemoteControllerBuilder builder = OBSRemoteControllerBuilder.builder()
+            // Crée le builder avec les paramètres de connexion
+            OBSRemoteController.Builder builder = OBSRemoteController.builder()
                 .host(host)
-                .port(port)
-                .lifecycle()
-                .withControllerLifecycle(lifecycle -> lifecycle
-                    .onConnectionAttempt(() -> log.info("Tentative de connexion à OBS WebSocket"))
-                    .onConnectionEstablished(() -> {
-                        log.info("Connexion établie avec OBS WebSocket");
-                        connected = true;
-                    })
-                    .onDisconnect(reason -> {
-                        log.info("Déconnexion d'OBS WebSocket: {}", reason.getMessage());
-                        connected = false;
-                    })
-                    .onControllerError(error -> log.error("Erreur OBS WebSocket: {}", error.getMessage(), error))
-                );
+                .port(port);
 
             // Ajouter le mot de passe si présent
             if (password != null && !password.isEmpty()) {
-                builder = builder.password(password);
+                builder.password(password);
             }
             
+            // Enregistrer les listeners d'événements
+            builder.registerEventListener(StreamStateChangedEvent.class, event -> {
+                boolean outputActive = event.getOutputActive();
+                log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
+                
+                // Mettre à jour le statut du streaming dans l'application
+                if (streamSynchronizer != null) {
+                    // Appeler les méthodes correspondantes dans le synchroniseur
+                }
+            });
+            
+            // Créer et démarrer le contrôleur OBS
             obsRemoteController = builder.build();
             
-            // Connexion et attente du résultat
+            // Définir les gestionnaires de cycle de vie
+            CompletableFuture<Boolean> connectionFuture = new CompletableFuture<>();
+            
+            obsRemoteController.onConnectionEstablished(() -> {
+                log.info("Connexion établie avec OBS WebSocket");
+                connected = true;
+                connectionFuture.complete(true);
+            });
+            
+            obsRemoteController.onDisconnect((reason) -> {
+                log.info("Déconnexion d'OBS WebSocket: {}", reason);
+                connected = false;
+            });
+            
+            obsRemoteController.onError((error) -> {
+                log.error("Erreur OBS WebSocket: {}", error.getMessage(), error);
+                if (!connectionFuture.isDone()) {
+                    connectionFuture.complete(false);
+                }
+            });
+            
+            // Connexion au serveur OBS WebSocket
             obsRemoteController.connect();
             
-            // Permettre un peu de temps pour la connexion
-            Thread.sleep(1000);
+            // Attendre la connexion (timeout après 5 secondes)
+            try {
+                return connectionFuture.get(5000, java.util.concurrent.TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                log.error("Timeout lors de la connexion à OBS WebSocket", e);
+                return false;
+            }
             
-            return connected;
         } catch (Exception e) {
             log.error("Erreur lors de la connexion à OBS WebSocket: {}", e.getMessage(), e);
             return false;
@@ -125,28 +151,6 @@ public class ObsWebSocketService {
     }
 
     /**
-     * Enregistre les gestionnaires d'événements pour les événements OBS.
-     */
-    private void registerEventHandlers() {
-        if (obsRemoteController != null) {
-            // Exemple d'abonnement à un événement spécifique
-            obsRemoteController.registerEventListener("StreamStateChanged", event -> {
-                try {
-                    boolean outputActive = event.getEventData().get("outputActive").asBoolean();
-                    log.info("État du flux OBS modifié: {}", outputActive ? "démarré" : "arrêté");
-                    
-                    // Mettre à jour le statut du streaming dans l'application
-                    if (streamSynchronizer != null) {
-                        // Appeler les méthodes correspondantes dans le synchroniseur
-                    }
-                } catch (Exception e) {
-                    log.error("Erreur lors du traitement de l'événement StreamStateChanged: {}", e.getMessage(), e);
-                }
-            });
-        }
-    }
-
-    /**
      * Démarre le streaming dans OBS.
      *
      * @return Future contenant true si le démarrage a réussi
@@ -158,13 +162,16 @@ public class ObsWebSocketService {
             return future;
         }
 
-        Map<String, Object> requestFields = new HashMap<>();
-        return obsRemoteController.sendRequest("StartStream", requestFields)
-                .thenApply(response -> true)
-                .exceptionally(ex -> {
-                    log.error("Erreur lors du démarrage du streaming OBS: {}", ex.getMessage(), ex);
-                    return false;
-                });
+        CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
+        obsRemoteController.sendRequest(new StartStreamRequest(), response -> {
+            resultFuture.complete(true);
+        }).exceptionally(ex -> {
+            log.error("Erreur lors du démarrage du streaming OBS: {}", ex.getMessage(), ex);
+            resultFuture.complete(false);
+            return null;
+        });
+        
+        return resultFuture;
     }
 
     /**
@@ -179,13 +186,16 @@ public class ObsWebSocketService {
             return future;
         }
 
-        Map<String, Object> requestFields = new HashMap<>();
-        return obsRemoteController.sendRequest("StopStream", requestFields)
-                .thenApply(response -> true)
-                .exceptionally(ex -> {
-                    log.error("Erreur lors de l'arrêt du streaming OBS: {}", ex.getMessage(), ex);
-                    return false;
-                });
+        CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
+        obsRemoteController.sendRequest(new StopStreamRequest(), response -> {
+            resultFuture.complete(true);
+        }).exceptionally(ex -> {
+            log.error("Erreur lors de l'arrêt du streaming OBS: {}", ex.getMessage(), ex);
+            resultFuture.complete(false);
+            return null;
+        });
+        
+        return resultFuture;
     }
 
     /**
@@ -200,20 +210,17 @@ public class ObsWebSocketService {
             return future;
         }
 
-        Map<String, Object> requestFields = new HashMap<>();
-        return obsRemoteController.sendRequest("GetStreamStatus", requestFields)
-                .thenApply(response -> {
-                    try {
-                        return response.getResponseData().get("outputActive").asBoolean();
-                    } catch (Exception e) {
-                        log.error("Erreur lors du traitement de la réponse GetStreamStatus: {}", e.getMessage(), e);
-                        return false;
-                    }
-                })
-                .exceptionally(ex -> {
-                    log.error("Erreur lors de la vérification du statut de streaming OBS: {}", ex.getMessage(), ex);
-                    return false;
-                });
+        CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
+        obsRemoteController.sendRequest(new GetStreamStatusRequest(), response -> {
+            GetStreamStatusResponse streamStatus = (GetStreamStatusResponse) response;
+            resultFuture.complete(streamStatus.getOutputActive());
+        }).exceptionally(ex -> {
+            log.error("Erreur lors de la vérification du statut de streaming OBS: {}", ex.getMessage(), ex);
+            resultFuture.complete(false);
+            return null;
+        });
+        
+        return resultFuture;
     }
 
     /**
