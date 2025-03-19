@@ -262,11 +262,16 @@ public class ObsStreamCapture {
             packet.setChannels(frame.audioChannels);
             packet.setAudioData(encodedSamples);
             packet.setPts(frame.timestamp);
-            packet.setSampleCount(frame.samples[0] != null ? frame.samples[0].length : 0);
+            
+            int sampleCount = 0;
+            if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
+                sampleCount = frame.samples[0].length;
+            }
+            packet.setSampleCount(sampleCount);
             packet.setPresentationTimestampMs(System.currentTimeMillis());
             
             // Calculer la durée en ms
-            float duration = (float) (frame.samples[0] != null ? frame.samples[0].length : 0) / frame.sampleRate * 1000;
+            float duration = (float) sampleCount / frame.sampleRate * 1000;
             packet.setDurationMs((long) duration);
             
             streamSynchronizer.processAudioPacket(packet);
@@ -304,8 +309,11 @@ public class ObsStreamCapture {
         // Dans un environnement de production, utilisez un encodeur audio approprié.
         
         // Pour l'instant, on simule la conversion
-        int samplesLength = frame.samples[0] != null ? frame.samples[0].length : 0;
-        int bytesLength = samplesLength * frame.audioChannels * 2;
+        int sampleCount = 0;
+        if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
+            sampleCount = frame.samples[0].length;
+        }
+        int bytesLength = sampleCount * frame.audioChannels * 2;
         byte[] bytes = new byte[bytesLength];
         // TODO: Implémentation réelle de la conversion
         
