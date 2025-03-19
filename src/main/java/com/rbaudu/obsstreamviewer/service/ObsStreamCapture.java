@@ -226,13 +226,8 @@ public class ObsStreamCapture {
      */
     private void processVideoFrame(Frame frame) {
         try {
-            // Calculer la taille des données et créer le tableau d'octets
-            int bytesSize = frame.imageWidth * frame.imageHeight * 3;
-            byte[] frameBytes = new byte[bytesSize];
-            
-            // Appliquer un traitement sur les données
-            // Ceci est juste un exemple, vous devriez implémenter la conversion réelle
-            
+            // Utiliser directement convertFrameToBytes
+            byte[] frameBytes = convertFrameToBytes(frame);
             String encodedFrame = Base64.getEncoder().encodeToString(frameBytes);
             
             VideoPacket packet = new VideoPacket();
@@ -258,19 +253,8 @@ public class ObsStreamCapture {
      */
     private void processAudioFrame(Frame frame) {
         try {
-            // Vérifier et calculer la taille réelle des données
-            int sampleCount = 0;
-            if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
-                sampleCount = frame.samples[0].length;
-            }
-            
-            // Créer le tableau d'octets à la bonne taille
-            int bytesSize = sampleCount * frame.audioChannels * 2;
-            byte[] sampleBytes = new byte[bytesSize];
-            
-            // Appliquer un traitement sur les données
-            // Ceci est juste un exemple, vous devriez implémenter la conversion réelle
-            
+            // Utiliser directement convertAudioToBytes
+            byte[] sampleBytes = convertAudioToBytes(frame);
             String encodedSamples = Base64.getEncoder().encodeToString(sampleBytes);
             
             AudioPacket packet = new AudioPacket();
@@ -280,6 +264,11 @@ public class ObsStreamCapture {
             packet.setChannels(frame.audioChannels);
             packet.setAudioData(encodedSamples);
             packet.setPts(frame.timestamp);
+            
+            int sampleCount = 0;
+            if (frame.samples != null && frame.samples.length > 0 && frame.samples[0] != null) {
+                sampleCount = frame.samples[0].length;
+            }
             packet.setSampleCount(sampleCount);
             packet.setPresentationTimestampMs(System.currentTimeMillis());
             
