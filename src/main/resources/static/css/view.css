@@ -1,0 +1,94 @@
+/* 
+ * Styles spécifiques pour la page de visualisation de flux
+ */
+
+/* Conteneur de visualisation */
+#viewerContainer {
+    position: relative;
+    width: 100%;
+    background-color: #000;
+    border-radius: 5px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+}
+
+/* Mode plein écran */
+.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0 !important;
+}
+
+/* Personnalisation des contrôles en mode plein écran */
+.fullscreen-mode .controls-overlay {
+    padding: 30px;
+}
+
+/* Amélioration des contrôles de synchronisation */
+.sync-control {
+    width: 100%;
+}
+
+.sync-control .form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.sync-control .form-range {
+    height: 10px;
+}
+
+/* Informations sur le flux */
+.stream-info ul li {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+/* Animation de chargement */
+@keyframes fadeInOut {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+.loading-overlay {
+    animation: fadeInOut 1.5s infinite;
+}
+
+/* Personnalisation des boutons de contrôle */
+.stream-controls button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.stream-controls button:hover {
+    transform: scale(1.05);
+}
+
+.stream-controls button i {
+    margin-right: 5px;
+}
+
+/* Réglages pour les appareils mobiles */
+@media (max-width: 768px) {
+    .bottom-controls {
+        padding: 10px;
+    }
+    
+    .sync-control .form-label {
+        font-size: 0.8rem;
+    }
+    
+    .stream-controls button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
